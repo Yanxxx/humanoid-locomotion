@@ -1,102 +1,158 @@
 # g1/g1_config.py
-# This file centralizes all hyperparameters, mirroring the original LeggedRobotCfg.
+# This file centralizes all hyperparameters, mirroring the provided LeggedRobotCfg.
+# The structure is designed to be JAX-friendly using flax.struct.dataclass.
 
 import flax.struct as struct
-import jax.numpy as jnp
+from typing import Tuple, List, Dict
+
+# --- Environment and Simulation Configs ---
+@struct.dataclass
+class SimConfig:
+    dt: float = 0.005
+    substeps: int = 1
+    gravity: Tuple[float, float, float] = (0., 0., -9.81)
 
 @struct.dataclass
 class EnvConfig:
-    xml_path: str = "./g1/g1.xml"
-    action_repeat: int = 4  # Corresponds to control.decimation
-    physics_dt: float = 0.005  # Simulation frequency: 200 Hz
-    max_episode_length_s: float = 20.0  # Episode length in seconds
+    num_envs: int = 4096
+    env_spacing: float = 3.0
+    episode_length_s: float = 20.0
+    send_timeouts: bool = True
+    decimation: int = 4 # Corresponds to control.decimation
+
+@struct.dataclass
+class TerrainConfig:
+    mesh_type: str = 'plane'
+    static_friction: float = 1.0
+    dynamic_friction: float = 1.0
+    restitution: float = 0.0
 
 @struct.dataclass
 class AssetConfig:
+    file: str = "./g1/g1.xml" # Placeholder, should be updated if needed
     foot_name: str = "foot"
-    penalize_contacts_on: tuple = ("thigh", "shank")
-    terminate_after_contacts_on: tuple = ("base",)
+    penalize_contacts_on: Tuple[str, ...] = ("thigh", "shank")
+    terminate_after_contacts_on: Tuple[str, ...] = ("base",)
+    fix_base_link: bool = False
+    self_collisions: int = 0
+
+# --- Robot and Control Configs ---
 
 @struct.dataclass
-class RewardScales:
-    # Mirrored from the original LeggedRobotCfg.rewards.scales
-    lin_vel_z: float = -2.0
-    ang_vel_xy: float = -0.05
-    orientation: float = -5.0
-    torques: float = -0.00001
-    action_rate: float = -0.01
-    dof_acc: float = -2.5e-7
-    collision: float = -1.0
-    # Custom rewards
-    tracking_lin_vel: float = 4.0
-    tracking_ang_vel: float = 2.0
-    alive: float = 2.0 # Corresponds to a positive constant reward
+class InitState:
+    pos: Tuple[float, float, float] = (0.0, 0.0, 1.0)
+    rot: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 1.0)
+    lin_vel: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+    ang_vel: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+    # Note: JAX version handles default angles differently, often centered at 0
+    # This dictionary is kept for reference.
+    # default_joint_angles: Dict[str, float] = {"joint_a": 0., "joint_b": 0.}
 
 @struct.dataclass
-class RewardsConfig:
-    scales: RewardScales = RewardScales()
-    base_height_target: float = 0.9
-    tracking_sigma: float = 0.25 # for exp reward shaping
+class ControlConfig:
+    control_type: str = 'P'
+    # NOTE: JAX version simplifies this. A full implementation would parse this dict.
+    stiffness: float = 10.0  # Simplified from {'joint_a': 10.0, 'joint_b': 15.}
+    damping: float = 1.0     # Simplified from {'joint_a': 1.0, 'joint_b': 1.5}
+    action_scale: float = 0.5
+
+# --- Training, Rewards, and Randomization ---
 
 @struct.dataclass
 class CommandsConfig:
-    # Command ranges for curriculum learning
-    initial_lin_vel_x: tuple = (-1.0, 1.0)
-    initial_lin_vel_y: tuple = (-0.5, 0.5)
-    initial_ang_vel_yaw: tuple = (-1.0, 1.0)
+    curriculum: bool = False
+    max_curriculum: float = 1.0
+    num_commands: int = 4
+    resampling_time: float = 10.0
+    heading_command: bool = True
+    class ranges:
+        lin_vel_x: Tuple[float, float] = (-1.0, 1.0)
+        lin_vel_y: Tuple[float, float] = (-1.0, 1.0)
+        ang_vel_yaw: Tuple[float, float] = (-1.0, 1.0)
+        heading: Tuple[float, float] = (-3.14, 3.14)
     
-    max_lin_vel_x: float = 2.0
-    max_lin_vel_y: float = 0.5
-    max_ang_vel_yaw: float = 2.0
-    
-    resampling_time: float = 10.0 # Time between command resampling in seconds
+    ranges: ranges = ranges()
 
 @struct.dataclass
 class DomainRandConfig:
     randomize_friction: bool = True
-    friction_range: tuple = (0.5, 1.25)
-    randomize_base_mass: bool = True
-    added_mass_range: tuple = (-1.0, 3.0)
+    friction_range: Tuple[float, float] = (0.5, 1.25)
+    randomize_base_mass: bool = False
+    added_mass_range: Tuple[float, float] = (-1.0, 1.0)
     push_robots: bool = True
     push_interval_s: float = 15.0
     max_push_vel_xy: float = 1.0
-    
+
 @struct.dataclass
-class ControlConfig:
-    # PD controller gains
-    stiffness: dict = {'joint': 50.0} # Simplified, one value for all joints
-    damping: dict = {'joint': 1.0}
-    action_scale: float = 0.5
-    
+class RewardScales:
+    termination: float = -0.0
+    tracking_lin_vel: float = 1.0
+    tracking_ang_vel: float = 0.5
+    lin_vel_z: float = -2.0
+    ang_vel_xy: float = -0.05
+    orientation: float = -0.0
+    torques: float = -0.00001
+    dof_vel: float = -0.0
+    dof_acc: float = -2.5e-7
+    base_height: float = -0.0
+    feet_air_time: float = 1.0
+    collision: float = -1.0
+    feet_stumble: float = -0.0
+    action_rate: float = -0.01
+    stand_still: float = -0.0
+
 @struct.dataclass
-class TrainConfig:
-    num_envs: int = 4096
-    num_iterations: int = 5000
-    rollout_length: int = 24
-    learning_rate: float = 1e-3
-    ppo_epochs: int = 5
-    num_minibatches: int = 4
-    clip_eps: float = 0.2
+class RewardsConfig:
+    scales: RewardScales = RewardScales()
+    only_positive_rewards: bool = True
+    tracking_sigma: float = 0.25
+    base_height_target: float = 1.0
+    max_contact_force: float = 100.0
+
+# --- PPO Algorithm Specific Configs ---
+
+@struct.dataclass
+class PolicyPPOConfig:
+    init_noise_std: float = 1.0
+    actor_hidden_dims: Tuple[int, ...] = (512, 256, 128)
+    critic_hidden_dims: Tuple[int, ...] = (512, 256, 128)
+    activation: str = 'elu'
+
+@struct.dataclass
+class AlgorithmPPOConfig:
     value_loss_coef: float = 1.0
+    use_clipped_value_loss: bool = True
+    clip_param: float = 0.2
     entropy_coef: float = 0.01
+    num_learning_epochs: int = 5
+    num_mini_batches: int = 4
+    learning_rate: float = 1.e-3
+    schedule: str = 'adaptive'
     gamma: float = 0.99
-    gae_lambda: float = 0.95
-    log_interval: int = 20
-    save_interval: int = 500
+    lam: float = 0.95 # Corresponds to gae_lambda
+    desired_kl: float = 0.01
+    max_grad_norm: float = 1.0
 
 @struct.dataclass
-class PolicyConfig:
-    actor_hidden_dims: tuple = (256, 128)
-    critic_hidden_dims: tuple = (256, 128)
-
+class RunnerPPOConfig:
+    num_steps_per_env: int = 24
+    max_iterations: int = 1500
+    save_interval: int = 50
+    # Load/resume params are handled by the training script logic, not stored in state
+    
+# --- Top-Level Config ---
 @struct.dataclass
 class FullConfig:
     env: EnvConfig = EnvConfig()
-    asset: AssetConfig = AssetConfig()
-    rewards: RewardsConfig = RewardsConfig()
+    terrain: TerrainConfig = TerrainConfig()
     commands: CommandsConfig = CommandsConfig()
-    domain_rand: DomainRandConfig = DomainRandConfig()
+    init_state: InitState = InitState()
     control: ControlConfig = ControlConfig()
-    train: TrainConfig = TrainConfig()
-    policy: PolicyConfig = PolicyConfig()
+    asset: AssetConfig = AssetConfig()
+    domain_rand: DomainRandConfig = DomainRandConfig()
+    rewards: RewardsConfig = RewardsConfig()
+    # PPO-specific training configs
+    policy_ppo: PolicyPPOConfig = PolicyPPOConfig()
+    algorithm_ppo: AlgorithmPPOConfig = AlgorithmPPOConfig()
+    runner_ppo: RunnerPPOConfig = RunnerPPOConfig()
 
