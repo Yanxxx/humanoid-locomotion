@@ -5,7 +5,7 @@ import time
 
 # --- Configuration ---
 # MODIFY THIS PATH
-XML_PATH = 'unitree_g1/scene.xml' 
+XML_PATH = '../g1/scene.xml' 
 
 # Load the model and data
 try:

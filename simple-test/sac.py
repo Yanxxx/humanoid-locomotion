@@ -17,7 +17,7 @@ class UnitreeG1Env(gym.Env):
 
         # --- MuJoCo Initialization ---
         # MODIFY THIS PATH
-        xml_path = 'unitree_g1/scene.xml'
+        xml_path = '../g1/scene.xml'
         try:
             self.model = mujoco.MjModel.from_xml_path(xml_path)
             self.data = mujoco.MjData(self.model)

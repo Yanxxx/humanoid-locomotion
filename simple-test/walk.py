@@ -5,7 +5,7 @@ import numpy as np
 import time
 
 # 加载模型
-model = mujoco.MjModel.from_xml_path("unitree_g1/scene.xml")  # 或者 .mjcf/.urdf 文件
+model = mujoco.MjModel.from_xml_path("../g1/scene.xml")  # 或者 .mjcf/.urdf 文件
 data = mujoco.MjData(model)
 
 print("qpos:", data.qpos)
