@@ -1,5 +1,7 @@
 # Humanoid Locomotion Research Project
 
+![IssacLab 5](https://img.shields.io/badge/IsaacLab-5.0-blue)
+![Platform](https://img.shields.io/badge/Ubuntu-24.04-orange)
 ![CI](https://img.shields.io/badge/build-passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python version](https://img.shields.io/badge/python-3.8+-informational)
