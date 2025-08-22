@@ -5,7 +5,7 @@
 ![Python version](https://img.shields.io/badge/python-3.8+-informational)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-This project is dedicated to the research and development of learning-based humanoid locomotion algorithms. Our goal is to leverage cutting-edge reinforcement learning techniques to enable dynamic and efficient movement in simulated humanoid robots.
+This project is dedicated to the research and development of learning-based humanoid locomotion algorithms. Our goal is to leverage cutting-edge reinforcement learning techniques to enable dynamic and efficient movement for simulated humanoid robots.
 
 **This project is currently under active development.**
 
