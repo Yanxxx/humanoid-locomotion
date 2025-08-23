@@ -77,7 +77,7 @@ Once the dependencies are installed, you can begin training and evaluating the r
 -   [ ] Develop and test on a custom humanoid robot model.
 -   [ ] Explore sim-to-real transfer techniques.
 
-See the [open issues](https://github.com/your_username/humanoid-locomotion-research/issues) for a full list of proposed features and known issues.
+<!-- See the [open issues](https://github.com/your_username/humanoid-locomotion-research/issues) for a full list of proposed features and known issues. -->
 
 ## Contributing
 
