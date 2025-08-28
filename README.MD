@@ -44,7 +44,7 @@ This project relies on the **MuJoCo** physics engine for accurate and efficient 
 
 1.  **Clone the repository:**
     ```sh
-    git clone [https://github.com/your_username/humanoid-locomotion-research.git](https://github.com/your_username/humanoid-locomotion-research.git)
+    git clone https://github.com/your_username/humanoid-locomotion-research.git
     cd humanoid-locomotion-research
     ```
 2.  **Install Python dependencies:**
